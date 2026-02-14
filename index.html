@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Self Attendance</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+body{
+margin:0;
+font-family:'Poppins',sans-serif;
+background:#F6F6F6;
+display:flex;
+justify-content:center;
+}
+
+.app{
+width:100%;
+max-width:480px;
+min-height:100vh;
+background:#F6F6F6;
+position:relative;
+}
+
+.header{
+background:#6750A4;
+color:white;
+padding:20px;
+border-bottom-left-radius:25px;
+border-bottom-right-radius:25px;
+box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+
+.card{
+background:white;
+margin:15px;
+padding:20px;
+border-radius:18px;
+box-shadow:0 4px 12px rgba(0,0,0,0.08);
+}
+
+input{
+width:100%;
+padding:12px;
+margin:8px 0;
+border-radius:12px;
+border:1px solid #ddd;
+font-size:14px;
+}
+
+button{
+width:100%;
+padding:14px;
+border:none;
+border-radius:14px;
+background:#6750A4;
+color:white;
+font-size:15px;
+margin-top:10px;
+cursor:pointer;
+transition:0.3s;
+}
+
+button:hover{
+background:#5740a0;
+}
+
+.success{
+background:#4CAF50 !important;
+}
+
+.logout{
+background:#f44336 !important;
+}
+
+.snackbar{
+position:fixed;
+bottom:20px;
+left:50%;
+transform:translateX(-50%);
+background:#333;
+color:white;
+padding:12px 20px;
+border-radius:12px;
+display:none;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<div class="header">
+<h2><i class="fa fa-user-check"></i> Self Attendance</h2>
+</div>
+
+<div id="loginCard" class="card">
+<h3>Login</h3>
+<input type="text" id="name" placeholder="Full Name">
+<input type="text" id="empId" placeholder="Employee ID">
+<input type="text" id="department" placeholder="Department">
+<button onclick="login()">Login</button>
+</div>
+
+<div id="dashboard" style="display:none;">
+<div class="card">
+<h3>Welcome, <span id="userName"></span></h3>
+<p id="todayDate"></p>
+</div>
+
+<div class="card">
+<button onclick="checkIn()"><i class="fa fa-sign-in-alt"></i> Check In</button>
+<button class="success" onclick="checkOut()"><i class="fa fa-sign-out-alt"></i> Check Out</button>
+<button class="logout" onclick="logout()"><i class="fa fa-power-off"></i> Logout</button>
+</div>
+</div>
+
+</div>
+
+<div id="snackbar" class="snackbar"></div>
+
+<script>
+const webAppUrl = "https://script.google.com/macros/s/AKfycbyMOR0FXeQ0CNc0QN23XJNC_7-nDoIqmJyQHCrRnxBltzP-W6DgO2oSTvs-urtLyYsy/exec";
+
+function showMessage(msg){
+const sb=document.getElementById("snackbar");
+sb.innerText=msg;
+sb.style.display="block";
+setTimeout(()=>sb.style.display="none",3000);
+}
+
+function login(){
+const name=document.getElementById("name").value;
+const empId=document.getElementById("empId").value;
+const department=document.getElementById("department").value;
+
+if(!name || !empId || !department){
+showMessage("Fill all fields");
+return;
+}
+
+localStorage.setItem("user",JSON.stringify({name,empId,department}));
+loadDashboard();
+}
+
+function loadDashboard(){
+const user=JSON.parse(localStorage.getItem("user"));
+if(!user) return;
+
+document.getElementById("loginCard").style.display="none";
+document.getElementById("dashboard").style.display="block";
+document.getElementById("userName").innerText=user.name;
+
+const today=new Date().toISOString().split("T")[0];
+document.getElementById("todayDate").innerText="Date: "+today;
+}
+
+function checkIn(){
+const user=JSON.parse(localStorage.getItem("user"));
+fetch(webAppUrl,{
+method:"POST",
+body:JSON.stringify({
+action:"checkin",
+name:user.name,
+empId:user.empId,
+department:user.department
+})
+})
+.then(res=>res.json())
+.then(data=>showMessage(data.message))
+.catch(()=>showMessage("Error"));
+}
+
+function checkOut(){
+const user=JSON.parse(localStorage.getItem("user"));
+fetch(webAppUrl,{
+method:"POST",
+body:JSON.stringify({
+action:"checkout",
+empId:user.empId
+})
+})
+.then(res=>res.json())
+.then(data=>showMessage(data.message))
+.catch(()=>showMessage("Error"));
+}
+
+function logout(){
+localStorage.removeItem("user");
+location.reload();
+}
+
+window.onload=loadDashboard;
+</script>
+
+</body>
+</html>
